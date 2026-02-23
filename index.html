@@ -1,0 +1,1981 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris Neon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(135deg, #0a0a23 0%, #1a1a3e 25%, #2d1b69 50%, #1a1a3e 75%, #0a0a23 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+        
+        /* Animated background particles */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            animation: particleFloat 20s ease-in-out infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        @keyframes particleFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(120deg); }
+            66% { transform: translateY(10px) rotate(240deg); }
+        }
+        
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            text-align: center;
+            animation: fadeIn 0.6s ease-out;
+            height: fit-content;
+        }
+        
+        .screen.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Neon glow effect */
+        .neon-glow {
+            text-shadow: 
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 15px #0ff,
+                0 0 20px #0ff,
+                0 0 35px #0ff,
+                0 0 40px #0ff;
+        }
+        
+        .neon-pink {
+            text-shadow: 
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 15px #ff0080,
+                0 0 20px #ff0080,
+                0 0 35px #ff0080,
+                0 0 40px #ff0080;
+        }
+        
+        /* Dashboard Styles */
+        .dashboard {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 80px 60px;
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                0 0 50px rgba(0, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dashboard::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(255, 255, 255, 0.03),
+                transparent
+            );
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .dashboard h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: rainbowText 4s ease-in-out infinite;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        @keyframes rainbowText {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .dashboard p {
+            font-size: 1.4rem;
+            margin-bottom: 50px;
+            opacity: 0.9;
+            font-weight: 400;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .menu-buttons {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .btn {
+            padding: 20px 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: 'Orbitron', monospace;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #ff006e, #8338ec, #3a86ff);
+            background-size: 300% 300%;
+            color: white;
+            box-shadow: 
+                0 15px 30px rgba(255, 0, 110, 0.4),
+                0 0 30px rgba(255, 0, 110, 0.2);
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #00f5ff, #ff00aa, #00ff88);
+            background-size: 300% 300%;
+            color: white;
+            box-shadow: 
+                0 15px 30px rgba(0, 245, 255, 0.4),
+                0 0 30px rgba(0, 245, 255, 0.2);
+            animation: gradientShift 3s ease infinite reverse;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff4757, #ff3742);
+            background-size: 300% 300%;
+            color: white;
+            box-shadow: 
+                0 15px 30px rgba(255, 71, 87, 0.4),
+                0 0 30px rgba(255, 71, 87, 0.2);
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        .btn:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.3),
+                0 0 50px rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(-4px) scale(1.02);
+        }
+        
+        /* Game Screen Styles */
+        .game-screen {
+            display: flex;
+            gap: 50px;
+            align-items: center;
+            justify-content: center;
+            height: fit-content;
+            min-height: 85vh;
+        }
+        
+        .game-area {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+        
+        .game-canvas {
+            border: 3px solid rgba(0, 255, 255, 0.6);
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.9);
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.8),
+                0 0 50px rgba(0, 255, 255, 0.3),
+                inset 0 0 30px rgba(0, 255, 255, 0.1);
+            position: relative;
+        }
+        
+        .game-canvas::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff);
+            border-radius: 15px;
+            z-index: -1;
+            animation: borderGlow 2s linear infinite;
+        }
+        
+        @keyframes borderGlow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+        
+        .game-info {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 30px 25px;
+            min-width: 280px;
+            max-height: 600px;
+            overflow-y: auto;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                0 0 30px rgba(0, 255, 255, 0.1);
+            position: relative;
+        }
+        
+        .game-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: infoShimmer 4s ease-in-out infinite;
+        }
+        
+        @keyframes infoShimmer {
+            0% { left: -100%; }
+            50% { left: 100%; }
+            100% { left: 100%; }
+        }
+        
+        .game-info h3 {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+            font-weight: 700;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .score-display {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #ff0080, #00ff80);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(255, 0, 128, 0.5);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .level-display, .lines-display {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #ffffff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .next-piece {
+            margin-top: 30px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .next-canvas {
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            margin-top: 15px;
+            box-shadow: 
+                0 10px 20px rgba(0, 0, 0, 0.5),
+                inset 0 0 20px rgba(0, 255, 255, 0.1);
+        }
+        
+        .game-controls {
+            margin-top: 25px;
+            text-align: left;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .game-controls h4 {
+            margin-bottom: 15px;
+            color: #00ffff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+        
+        .control-item {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: 500;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            border-left: 2px solid rgba(0, 255, 255, 0.6);
+            line-height: 1.3;
+        }
+        
+        /* Leaderboard Styles */
+        .leaderboard {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 50px 40px;
+            max-width: 700px;
+            margin: 0 auto;
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                0 0 40px rgba(0, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .leaderboard::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(255, 255, 255, 0.05),
+                transparent
+            );
+            animation: leaderboardShimmer 5s ease-in-out infinite;
+        }
+        
+        @keyframes leaderboardShimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .leaderboard h2 {
+            font-size: 3rem;
+            margin-bottom: 40px;
+            background: linear-gradient(45deg, #ffd700, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 900;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .score-list {
+            list-style: none;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .score-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s;
+        }
+        
+        .score-item:hover::before {
+            left: 100%;
+        }
+        
+        .score-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .score-item:first-child {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #333;
+            font-weight: 900;
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.4);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+        }
+        
+        .score-item:nth-child(2) {
+            background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
+            color: #333;
+            font-weight: 800;
+            box-shadow: 0 8px 16px rgba(192, 192, 192, 0.4);
+        }
+        
+        .score-item:nth-child(3) {
+            background: linear-gradient(135deg, #cd7f32, #e6a146);
+            color: white;
+            font-weight: 700;
+            box-shadow: 0 6px 12px rgba(205, 127, 50, 0.4);
+        }
+        
+        .rank {
+            font-weight: 900;
+            min-width: 60px;
+            font-size: 1.4rem;
+        }
+
+        /* Storage Status Indicator */
+        .storage-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.2), rgba(0, 255, 0, 0.1));
+            border: 1px solid rgba(0, 255, 0, 0.6);
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #00ff00;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .storage-status.error {
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.2), rgba(255, 0, 0, 0.1));
+            border-color: rgba(255, 0, 0, 0.6);
+            color: #ff4757;
+        }
+
+        /* Leaderboard Controls */
+        .leaderboard-controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .game-over-screen {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 60px;
+            text-align: center;
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                0 0 40px rgba(255, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-over-screen::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(255, 0, 0, 0.05),
+                transparent
+            );
+            animation: gameOverShimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes gameOverShimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .game-over-screen h2 {
+            font-size: 3.5rem;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #ff0040, #ff4080);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 900;
+            text-shadow: 0 0 20px rgba(255, 0, 64, 0.5);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .final-score {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            background: linear-gradient(45deg, #00ff80, #0080ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 15px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .back-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .game-screen {
+                flex-direction: column;
+                gap: 30px;
+                height: auto;
+                padding: 20px;
+            }
+            
+            .game-area {
+                flex-direction: column;
+                align-items: center;
+                gap: 30px;
+            }
+            
+            .game-info {
+                min-width: auto;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .menu-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .dashboard h1 {
+                font-size: 3rem;
+                letter-spacing: 4px;
+            }
+            
+            .dashboard {
+                padding: 50px 30px;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .back-btn {
+                top: 15px;
+                left: 15px;
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+
+            .storage-status {
+                top: 10px;
+                right: 10px;
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+        }
+        
+        /* Pulse animation for interactive elements */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .btn:focus {
+            outline: none;
+            animation: pulse 2s infinite;
+        }
+        
+        /* Glitch effect for game over */
+        .glitch {
+            animation: glitch 0.5s ease-in-out;
+        }
+        
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Storage Status Indicator -->
+    <div id="storageStatus" class="storage-status">
+        💾 Penyimpanan: Aktif
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboard" class="container screen active">
+        <div class="dashboard">
+            <h1 class="neon-glow">TETRIS</h1>
+            <p>Masuki dunia neon dan susun balok-balok yang jatuh!</p>
+            <div class="menu-buttons">
+                <button class="btn btn-primary" onclick="showNameInput()">🎮 MULAI GAME</button>
+                <button class="btn btn-secondary" onclick="showLeaderboard()">🏆 PERINGKAT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Name Input Screen -->
+    <div id="nameInput" class="container screen">
+        <div class="dashboard">
+            <h2 class="neon-pink" style="font-size: 2.5rem; margin-bottom: 30px;">MASUKKAN NAMA</h2>
+            <div style="margin-bottom: 40px;">
+                <input type="text" id="playerName" placeholder="Nama Pemain..." maxlength="15" 
+                       style="
+                           padding: 20px 30px;
+                           font-size: 1.4rem;
+                           font-family: 'Orbitron', monospace;
+                           font-weight: 600;
+                           background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+                           backdrop-filter: blur(10px);
+                           border: 2px solid rgba(0, 255, 255, 0.6);
+                           border-radius: 15px;
+                           color: white;
+                           text-align: center;
+                           width: 350px;
+                           max-width: 90%;
+                           outline: none;
+                           transition: all 0.3s ease;
+                           text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                       "
+                       onkeypress="if(event.key==='Enter') confirmName()"
+                       onfocus="this.style.borderColor='rgba(255, 0, 255, 0.8)'; this.style.boxShadow='0 0 30px rgba(255, 0, 255, 0.4)'"
+                       onblur="this.style.borderColor='rgba(0, 255, 255, 0.6)'; this.style.boxShadow='0 10px 30px rgba(0, 0, 0, 0.3)'"
+                >
+            </div>
+            <div class="menu-buttons">
+                <button class="btn btn-primary" onclick="confirmName()">✨ MULAI</button>
+                <button class="btn btn-secondary" onclick="showDashboard()">← KEMBALI</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="container screen">
+        <button class="back-btn" onclick="showDashboard()">← KEMBALI</button>
+        <div class="game-screen">
+            <div class="game-area">
+                <canvas id="gameCanvas" class="game-canvas" width="300" height="600"></canvas>
+                <div class="game-info">
+                    <h3>🔥 SKOR</h3>
+                    <div class="score-display" id="score">0</div>
+                    
+                    <div class="level-display">⚡ Level: <span id="level">1</span></div>
+                    <div class="lines-display">📊 Baris: <span id="lines">0</span></div>
+                    
+                    <div class="next-piece">
+                        <h4 style="color: #00ffff; text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);">SELANJUTNYA:</h4>
+                        <canvas id="nextCanvas" class="next-canvas" width="100" height="100"></canvas>
+                    </div>
+                    
+                    <div class="game-controls">
+                        <h4>🎯 KONTROL</h4>
+                        <div class="control-item">◀ ▶ Gerak Kiri/Kanan</div>
+                        <div class="control-item">▼ Turun Cepat</div>
+                        <div class="control-item">▲ Putar Balok</div>
+                        <div class="control-item">🚀 Spasi: Hard Drop</div>
+                        <div class="control-item">⏸ P: Pause/Resume</div>
+                        <div class="control-item">📱 Swipe: Kontrol Touch</div>
+                        <div class="control-item">👆 Double Tap: Drop</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Screen -->
+    <div id="leaderboard" class="container screen">
+        <button class="back-btn" onclick="showDashboard()">← KEMBALI</button>
+        <div class="leaderboard">
+            <h2>🏆 HALL OF FAME</h2>
+            <ul class="score-list" id="scoreList">
+                <!-- Scores will be populated by JavaScript -->
+            </ul>
+            <div class="leaderboard-controls">
+                <button class="btn btn-primary" onclick="exportScores()">📤 EKSPOR DATA</button>
+                <button class="btn btn-secondary" onclick="importScores()">📥 IMPOR DATA</button>
+                <button class="btn btn-danger" onclick="clearScores()">🗑️ HAPUS SEMUA</button>
+            </div>
+            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport(event)">
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="container screen">
+        <div class="game-over-screen">
+            <h2 class="glitch">GAME OVER!</h2>
+            <div class="final-score">Skor Akhir: <span id="finalScore">0</span></div>
+            <div class="menu-buttons">
+                <button class="btn btn-primary" onclick="startGame()">🔄 MAIN LAGI</button>
+                <button class="btn btn-secondary" onclick="showDashboard()">🏠 MENU UTAMA</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced Storage Manager with multiple backup methods
+        class StorageManager {
+            constructor() {
+                this.storageKey = 'tetrisNeonScores';
+                this.backupKey = 'tetrisNeonScoresBackup';
+                this.isLocalStorageAvailable = this.checkLocalStorage();
+                this.updateStorageStatus();
+            }
+
+            checkLocalStorage() {
+                try {
+                    const test = 'tetris-storage-test';
+                    localStorage.setItem(test, test);
+                    localStorage.removeItem(test);
+                    return true;
+                } catch (e) {
+                    console.warn('LocalStorage tidak tersedia:', e);
+                    return false;
+                }
+            }
+
+            updateStorageStatus() {
+                const statusEl = document.getElementById('storageStatus');
+                if (this.isLocalStorageAvailable) {
+                    statusEl.textContent = '💾 Penyimpanan: Aktif';
+                    statusEl.classList.remove('error');
+                } else {
+                    statusEl.textContent = '⚠️ Penyimpanan: Terbatas';
+                    statusEl.classList.add('error');
+                }
+            }
+
+            saveScores(scores) {
+                const dataToSave = {
+                    scores: scores,
+                    timestamp: new Date().toISOString(),
+                    version: '2.0'
+                };
+
+                if (this.isLocalStorageAvailable) {
+                    try {
+                        // Save to primary storage
+                        localStorage.setItem(this.storageKey, JSON.stringify(dataToSave));
+                        // Create backup
+                        localStorage.setItem(this.backupKey, JSON.stringify(dataToSave));
+                        
+                        // Also save to sessionStorage as additional backup
+                        sessionStorage.setItem(this.storageKey, JSON.stringify(dataToSave));
+                        
+                        console.log('✅ Skor berhasil disimpan ke localStorage');
+                        return true;
+                    } catch (e) {
+                        console.error('❌ Error menyimpan ke localStorage:', e);
+                        this.fallbackSave(dataToSave);
+                        return false;
+                    }
+                } else {
+                    this.fallbackSave(dataToSave);
+                    return false;
+                }
+            }
+
+            loadScores() {
+                if (this.isLocalStorageAvailable) {
+                    try {
+                        // Try primary storage first
+                        let data = localStorage.getItem(this.storageKey);
+                        
+                        // If primary fails, try backup
+                        if (!data) {
+                            console.log('⚠️ Primary storage kosong, mencoba backup...');
+                            data = localStorage.getItem(this.backupKey);
+                        }
+                        
+                        // If both fail, try sessionStorage
+                        if (!data) {
+                            console.log('⚠️ Backup kosong, mencoba sessionStorage...');
+                            data = sessionStorage.getItem(this.storageKey);
+                        }
+
+                        if (data) {
+                            const parsedData = JSON.parse(data);
+                            console.log('✅ Skor berhasil dimuat dari storage');
+                            
+                            // Ensure backward compatibility
+                            if (Array.isArray(parsedData)) {
+                                return parsedData; // Old format
+                            } else if (parsedData.scores) {
+                                return parsedData.scores; // New format
+                            }
+                        }
+                    } catch (e) {
+                        console.error('❌ Error memuat dari localStorage:', e);
+                    }
+                }
+                
+                console.log('⚠️ Tidak ada data tersimpan, menggunakan array kosong');
+                return [];
+            }
+
+            fallbackSave(data) {
+                try {
+                    // Try sessionStorage as fallback
+                    sessionStorage.setItem(this.storageKey, JSON.stringify(data));
+                    console.log('✅ Skor disimpan ke sessionStorage (fallback)');
+                } catch (e) {
+                    console.error('❌ Semua metode penyimpanan gagal:', e);
+                    // Could implement IndexedDB or other storage methods here
+                }
+            }
+
+            exportData() {
+                const scores = this.loadScores();
+                const exportData = {
+                    scores: scores,
+                    exportDate: new Date().toISOString(),
+                    gameVersion: 'Tetris Neon v2.0'
+                };
+                
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `tetris-neon-scores-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                console.log('✅ Data berhasil diekspor');
+            }
+
+            importData(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const importedData = JSON.parse(e.target.result);
+                            let scores = [];
+                            
+                            // Handle different import formats
+                            if (Array.isArray(importedData)) {
+                                scores = importedData;
+                            } else if (importedData.scores) {
+                                scores = importedData.scores;
+                            } else {
+                                throw new Error('Format file tidak valid');
+                            }
+                            
+                            // Validate scores format
+                            if (scores.every(score => score.score && score.name)) {
+                                this.saveScores(scores);
+                                console.log('✅ Data berhasil diimpor');
+                                resolve(scores);
+                            } else {
+                                throw new Error('Format skor tidak valid');
+                            }
+                        } catch (error) {
+                            console.error('❌ Error mengimpor data:', error);
+                            reject(error);
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+            }
+
+            clearAllData() {
+                if (this.isLocalStorageAvailable) {
+                    try {
+                        localStorage.removeItem(this.storageKey);
+                        localStorage.removeItem(this.backupKey);
+                        sessionStorage.removeItem(this.storageKey);
+                        console.log('✅ Semua data berhasil dihapus');
+                        return true;
+                    } catch (e) {
+                        console.error('❌ Error menghapus data:', e);
+                        return false;
+                    }
+                }
+                return false;
+            }
+        }
+
+        // Initialize storage manager
+        const storageManager = new StorageManager();
+
+        // Game variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const nextCanvas = document.getElementById('nextCanvas');
+        const nextCtx = nextCanvas.getContext('2d');
+
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK_SIZE = 30;
+
+        let board = [];
+        let score = 0;
+        let level = 1;
+        let lines = 0;
+        let dropTime = 0;
+        let lastTime = 0;
+        let gameRunning = false;
+        let currentPiece = null;
+        let nextPiece = null;
+        let playerName = 'Player';
+        let animationFrameId = null;
+
+        // Tetris pieces with proper 3x3 and 4x4 grids for full rotation
+        const PIECES = {
+            'I': [
+                [0,0,0,0],
+                [1,1,1,1],
+                [0,0,0,0],
+                [0,0,0,0]
+            ],
+            'O': [
+                [0,0,0,0],
+                [0,1,1,0],
+                [0,1,1,0],
+                [0,0,0,0]
+            ],
+            'T': [
+                [0,0,0],
+                [1,1,1],
+                [0,1,0]
+            ],
+            'S': [
+                [0,0,0],
+                [0,1,1],
+                [1,1,0]
+            ],
+            'Z': [
+                [0,0,0],
+                [1,1,0],
+                [0,1,1]
+            ],
+            'J': [
+                [0,0,0],
+                [1,1,1],
+                [0,0,1]
+            ],
+            'L': [
+                [0,0,0],
+                [1,1,1],
+                [1,0,0]
+            ]
+        };
+
+        const COLORS = {
+            'I': '#00f5ff',
+            'O': '#ffff00', 
+            'T': '#ff00ff',
+            'S': '#00ff00',
+            'Z': '#ff0040',
+            'J': '#4080ff',
+            'L': '#ff8000'
+        };
+
+        // Initialize game
+        function initGame() {
+            board = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+            score = 0;
+            level = 1;
+            lines = 0;
+            dropTime = 0;
+            gameRunning = true;
+            
+            currentPiece = createPiece();
+            nextPiece = createPiece();
+            
+            updateDisplay();
+            drawNextPiece();
+        }
+
+        // Create random piece with proper spawn position
+        function createPiece() {
+            const pieces = Object.keys(PIECES);
+            const type = pieces[Math.floor(Math.random() * pieces.length)];
+            const shape = PIECES[type];
+            
+            // Calculate proper spawn position
+            let spawnX = Math.floor((COLS - getShapeWidth(shape)) / 2);
+            
+            return {
+                type: type,
+                shape: shape,
+                x: spawnX,
+                y: 0,
+                color: COLORS[type]
+            };
+        }
+        
+        // Helper function to get actual width of a piece shape
+        function getShapeWidth(shape) {
+            let maxWidth = 0;
+            for (let row of shape) {
+                let rowWidth = 0;
+                for (let col of row) {
+                    if (col) rowWidth++;
+                }
+                maxWidth = Math.max(maxWidth, rowWidth);
+            }
+            return maxWidth;
+        }
+
+        // Draw board with neon effects
+        function drawBoard() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid with neon effect
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.shadowColor = 'rgba(0, 255, 255, 0.5)';
+            ctx.shadowBlur = 2;
+            
+            for (let x = 0; x <= COLS; x++) {
+                ctx.beginPath();
+                ctx.moveTo(x * BLOCK_SIZE, 0);
+                ctx.lineTo(x * BLOCK_SIZE, ROWS * BLOCK_SIZE);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y <= ROWS; y++) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * BLOCK_SIZE);
+                ctx.lineTo(COLS * BLOCK_SIZE, y * BLOCK_SIZE);
+                ctx.stroke();
+            }
+
+            ctx.shadowBlur = 0;
+
+            // Draw placed pieces
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    if (board[y][x]) {
+                        drawBlock(ctx, x, y, board[y][x]);
+                    }
+                }
+            }
+        }
+
+        // Draw current piece
+        function drawPiece(piece) {
+            for (let y = 0; y < piece.shape.length; y++) {
+                for (let x = 0; x < piece.shape[y].length; x++) {
+                    if (piece.shape[y][x]) {
+                        drawBlock(ctx, piece.x + x, piece.y + y, piece.color);
+                    }
+                }
+            }
+        }
+
+        // Draw block with neon glow
+        function drawBlock(context, x, y, color) {
+            const px = x * BLOCK_SIZE;
+            const py = y * BLOCK_SIZE;
+            
+            // Main block
+            context.fillStyle = color;
+            context.fillRect(px + 1, py + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+            
+            // Neon glow effect
+            context.shadowColor = color;
+            context.shadowBlur = 15;
+            context.fillRect(px + 1, py + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+            context.shadowBlur = 0;
+            
+            // Border
+            context.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            context.lineWidth = 2;
+            context.strokeRect(px, py, BLOCK_SIZE, BLOCK_SIZE);
+            
+            // Highlight
+            context.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            context.fillRect(px + 2, py + 2, BLOCK_SIZE - 4, 3);
+            context.fillRect(px + 2, py + 2, 3, BLOCK_SIZE - 4);
+        }
+
+        // Draw next piece with proper centering
+        function drawNextPiece() {
+            nextCtx.fillStyle = '#000';
+            nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+            
+            if (nextPiece) {
+                const blockSize = 16;
+                
+                // Find actual bounds of the piece
+                let minX = nextPiece.shape[0].length, maxX = -1;
+                let minY = nextPiece.shape.length, maxY = -1;
+                
+                for (let y = 0; y < nextPiece.shape.length; y++) {
+                    for (let x = 0; x < nextPiece.shape[y].length; x++) {
+                        if (nextPiece.shape[y][x]) {
+                            minX = Math.min(minX, x);
+                            maxX = Math.max(maxX, x);
+                            minY = Math.min(minY, y);
+                            maxY = Math.max(maxY, y);
+                        }
+                    }
+                }
+                
+                const pieceWidth = (maxX - minX + 1) * blockSize;
+                const pieceHeight = (maxY - minY + 1) * blockSize;
+                const offsetX = (nextCanvas.width - pieceWidth) / 2 - minX * blockSize;
+                const offsetY = (nextCanvas.height - pieceHeight) / 2 - minY * blockSize;
+                
+                for (let y = 0; y < nextPiece.shape.length; y++) {
+                    for (let x = 0; x < nextPiece.shape[y].length; x++) {
+                        if (nextPiece.shape[y][x]) {
+                            const px = offsetX + x * blockSize;
+                            const py = offsetY + y * blockSize;
+                            
+                            nextCtx.fillStyle = nextPiece.color;
+                            nextCtx.fillRect(px, py, blockSize - 1, blockSize - 1);
+                            
+                            nextCtx.shadowColor = nextPiece.color;
+                            nextCtx.shadowBlur = 5;
+                            nextCtx.fillRect(px, py, blockSize - 1, blockSize - 1);
+                            nextCtx.shadowBlur = 0;
+                            
+                            nextCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                            nextCtx.strokeRect(px, py, blockSize - 1, blockSize - 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check collision
+        function collision(piece, dx = 0, dy = 0) {
+            for (let y = 0; y < piece.shape.length; y++) {
+                for (let x = 0; x < piece.shape[y].length; x++) {
+                    if (piece.shape[y][x]) {
+                        const newX = piece.x + x + dx;
+                        const newY = piece.y + y + dy;
+                        
+                        if (newX < 0 || newX >= COLS || newY >= ROWS) {
+                            return true;
+                        }
+                        
+                        if (newY >= 0 && board[newY] && board[newY][newX]) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Enhanced rotate piece with proper 4-state rotation
+        function rotate(piece) {
+            const rotated = [];
+            const size = piece.shape.length;
+            
+            for (let y = 0; y < size; y++) {
+                rotated[y] = [];
+                for (let x = 0; x < size; x++) {
+                    rotated[y][x] = piece.shape[size - 1 - x][y];
+                }
+            }
+            return rotated;
+        }
+
+        function tryRotate(piece) {
+            const originalShape = piece.shape;
+            const originalX = piece.x;
+            const originalY = piece.y;
+
+            const rotatedShape = rotate(piece);
+            const testPiece = {...piece, shape: rotatedShape};
+            
+            const kicks3x3 = [
+                [0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]
+            ];
+            const kicks4x4 = [
+                [0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]
+            ];
+
+            const kicks = (piece.type === 'I') ? kicks4x4 : kicks3x3;
+
+            for (let [kickX, kickY] of kicks) {
+                testPiece.x = originalX + kickX;
+                testPiece.y = originalY + kickY;
+                
+                if (!collision(testPiece)) {
+                    piece.x = testPiece.x;
+                    piece.y = testPiece.y;
+                    return rotatedShape;
+                }
+            }
+            
+            return null;
+        }
+
+        // Enhanced move piece with single block movement
+        function movePiece(dx, dy) {
+            if (!collision(currentPiece, dx, dy)) {
+                currentPiece.x += dx;
+                currentPiece.y += dy;
+                return true;
+            }
+            return false;
+        }
+        
+        // Drop piece
+        function dropPiece() {
+            while (movePiece(0, 1)) {}
+        }
+
+        // Lock piece
+        function lockPiece() {
+            lockPieceEnhanced();
+        }
+
+        // Clear completed lines
+        function clearLines() {
+            clearLinesWithEffect();
+        }
+
+        // Update display
+        function updateDisplay() {
+            document.getElementById('score').textContent = score.toLocaleString();
+            document.getElementById('level').textContent = level;
+            document.getElementById('lines').textContent = lines;
+        }
+
+        // Game loop
+        function gameLoopEnhanced(time = 0) {
+            if (!gameRunning) {
+                animationFrameId = null;
+                return;
+            }
+
+            const deltaTime = time - lastTime;
+            lastTime = time;
+            
+            dropTime += deltaTime;
+            if (dropTime > Math.max(50, 1000 - (level - 1) * 50)) {
+                if (!movePiece(0, 1)) {
+                    lockPiece();
+                }
+                dropTime = 0;
+            }
+            
+            drawBoard();
+            if (currentPiece) {
+                drawPiece(currentPiece);
+            }
+            
+            updateParticles();
+            
+            animationFrameId = requestAnimationFrame(gameLoopEnhanced);
+        }
+
+        // Game over
+        function gameOver() {
+            gameRunning = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            saveScore(score, playerName);
+            document.getElementById('finalScore').textContent = score.toLocaleString();
+            showGameOver();
+        }
+
+        // Helper function to get actual height of a piece shape
+        function getShapeHeight(shape) {
+            let maxHeight = 0;
+            for (let y = 0; y < shape.length; y++) {
+                for (let x = 0; x < shape[y].length; x++) {
+                    if (shape[y][x]) {
+                        maxHeight = Math.max(maxHeight, y + 1);
+                    }
+                }
+            }
+            return maxHeight;
+        }
+
+        // Enhanced game functions with sound
+        function clearLinesWithEffect() {
+            let linesCleared = 0;
+            let linesToClear = [];
+            
+            for (let y = ROWS - 1; y >= 0; y--) {
+                if (board[y].every(cell => cell !== 0)) {
+                    linesToClear.push(y);
+                }
+            }
+            
+            if (linesToClear.length > 0) {
+                linesToClear.forEach(lineY => {
+                    for (let x = 0; x < COLS; x++) {
+                        board[lineY][x] = '#ffffff';
+                    }
+                });
+                
+                drawBoard();
+                if (currentPiece) drawPiece(currentPiece);
+                
+                playSound(800, 0.1);
+                
+                setTimeout(() => {
+                    let newBoard = [];
+                    let clearedCount = 0;
+                    for (let y = 0; y < ROWS; y++) {
+                        if (!linesToClear.includes(y)) {
+                            newBoard.push(board[y]);
+                        } else {
+                            clearedCount++;
+                        }
+                    }
+                    
+                    for (let i = 0; i < clearedCount; i++) {
+                        newBoard.unshift(Array(COLS).fill(0));
+                    }
+                    board = newBoard;
+                    linesCleared = clearedCount;
+                    
+                    lines += linesCleared;
+                    score += linesCleared * 100 * level;
+                    
+                    if (linesCleared === 4) {
+                        score += 800;
+                        playSound(1000, 0.3);
+                    }
+                    
+                    level = Math.floor(lines / 10) + 1;
+                    updateDisplay();
+                }, 150);
+            }
+        }
+
+        function lockPieceEnhanced() {
+            for (let y = 0; y < currentPiece.shape.length; y++) {
+                for (let x = 0; x < currentPiece.shape[y].length; x++) {
+                    if (currentPiece.shape[y][x]) {
+                        const boardY = currentPiece.y + y;
+                        const boardX = currentPiece.x + x;
+                        
+                        board[boardY][boardX] = currentPiece.color;
+                    }
+                }
+            }
+            
+            playSound(200, 0.1);
+            
+            clearLinesWithEffect();
+            currentPiece = nextPiece;
+            nextPiece = createPiece();
+            drawNextPiece();
+            
+            if (collision(currentPiece, 0, 0)) {
+                gameOver();
+            }
+        }
+
+        // Particle effect system
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.life = 1.0;
+                this.decay = 0.02;
+                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.1;
+                this.life -= this.decay;
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 10;
+                ctx.fillRect(this.x, this.y, 3, 3);
+                ctx.restore();
+            }
+            
+            isDead() {
+                return this.life <= 0;
+            }
+        }
+
+        let particles = [];
+
+        function createParticles(x, y, count = 10) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        function updateParticles() {
+            particles = particles.filter(particle => {
+                particle.update();
+                if (!particle.isDead()) {
+                    particle.draw(ctx);
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        // Sound effects
+        function playSound(frequency, duration) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'square';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (e) {
+                // Silently fail if audio context is not available
+            }
+        }
+
+        // Enhanced Score Management Functions
+        function saveScore(score, name) {
+            let scores = storageManager.loadScores();
+            const newScore = {
+                score: score,
+                name: name.trim() || 'Anonymous',
+                date: new Date().toLocaleDateString('id-ID'),
+                timestamp: Date.now(),
+                level: level,
+                lines: lines
+            };
+            
+            scores.push(newScore);
+            scores.sort((a, b) => b.score - a.score);
+            scores = scores.slice(0, 15); // Keep top 15 scores
+            
+            const saved = storageManager.saveScores(scores);
+            if (saved) {
+                console.log('✅ Skor baru tersimpan:', newScore);
+            } else {
+                console.warn('⚠️ Skor mungkin tidak tersimpan secara permanen');
+            }
+            
+            return saved;
+        }
+
+        function displayLeaderboard() {
+            const scores = storageManager.loadScores();
+            const scoreList = document.getElementById('scoreList');
+            
+            if (scores.length === 0) {
+                scoreList.innerHTML = `
+                    <li class="score-item" style="justify-content: center; opacity: 0.7;">
+                        <span>🎮 Belum ada skor tersimpan</span>
+                    </li>
+                    <li class="score-item" style="justify-content: center; opacity: 0.5; font-size: 0.9rem;">
+                        <span>Mainkan game untuk melihat skor Anda di sini!</span>
+                    </li>
+                `;
+                return;
+            }
+            
+            scoreList.innerHTML = scores.map((item, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                const timeAgo = getTimeAgo(item.timestamp || 0);
+                
+                return `
+                    <li class="score-item">
+                        <span class="rank">${medal} #${index + 1}</span>
+                        <div style="flex: 1; text-align: left; margin-left: 20px;">
+                            <div style="font-size: 1.2rem; font-weight: 700;">${item.name}</div>
+                            <div style="font-size: 0.8rem; opacity: 0.7;">
+                                Level ${item.level || 1} • ${item.lines || 0} baris • ${item.date || 'N/A'}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; font-size: 1.3rem;">${item.score.toLocaleString()}</div>
+                            <div style="opacity: 0.6; font-size: 0.8rem;">${timeAgo}</div>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+            
+            console.log(`📊 Menampilkan ${scores.length} skor dari leaderboard`);
+        }
+
+        function getTimeAgo(timestamp) {
+            if (!timestamp) return '';
+            
+            const now = Date.now();
+            const diff = now - timestamp;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor(diff / (1000 * 60));
+            
+            if (days > 0) return `${days} hari lalu`;
+            if (hours > 0) return `${hours} jam lalu`;
+            if (minutes > 0) return `${minutes} menit lalu`;
+            return 'Baru saja';
+        }
+
+        function clearScores() {
+            const confirmMessage = 'Yakin ingin menghapus semua skor?\n\nTindakan ini tidak dapat dibatalkan!';
+            if (confirm(confirmMessage)) {
+                const cleared = storageManager.clearAllData();
+                if (cleared) {
+                    displayLeaderboard();
+                    playSound(300, 0.2);
+                    
+                    // Show temporary success message
+                    const scoreList = document.getElementById('scoreList');
+                    scoreList.innerHTML = `
+                        <li class="score-item" style="justify-content: center; background: linear-gradient(135deg, #28a745, #20c997);">
+                            <span>✅ Semua skor berhasil dihapus!</span>
+                        </li>
+                    `;
+                    
+                    setTimeout(() => {
+                        displayLeaderboard();
+                    }, 2000);
+                } else {
+                    alert('Error: Gagal menghapus data. Coba lagi nanti.');
+                }
+            }
+        }
+
+        function exportScores() {
+            try {
+                storageManager.exportData();
+                playSound(600, 0.15);
+                
+                // Show temporary success message
+                const originalText = document.querySelector('.leaderboard h2').textContent;
+                document.querySelector('.leaderboard h2').textContent = '📤 Data Berhasil Diekspor!';
+                document.querySelector('.leaderboard h2').style.color = '#28a745';
+                
+                setTimeout(() => {
+                    document.querySelector('.leaderboard h2').textContent = originalText;
+                    document.querySelector('.leaderboard h2').style.color = '';
+                }, 2000);
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Error: Gagal mengekspor data. ' + error.message);
+            }
+        }
+
+        function importScores() {
+            document.getElementById('importFile').click();
+        }
+
+        async function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                const importedScores = await storageManager.importData(file);
+                displayLeaderboard();
+                playSound(800, 0.2);
+                
+                // Show success message
+                const originalText = document.querySelector('.leaderboard h2').textContent;
+                document.querySelector('.leaderboard h2').textContent = `📥 ${importedScores.length} Skor Berhasil Diimpor!`;
+                document.querySelector('.leaderboard h2').style.color = '#28a745';
+                
+                setTimeout(() => {
+                    document.querySelector('.leaderboard h2').textContent = originalText;
+                    document.querySelector('.leaderboard h2').style.color = '';
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Import error:', error);
+                alert('Error: Gagal mengimpor data.\n\n' + error.message);
+                playSound(200, 0.3);
+            }
+            
+            // Reset file input
+            event.target.value = '';
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (!currentPiece) return;
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    if (gameRunning && movePiece(-1, 0)) playSound(300, 0.05);
+                    break;
+                case 'ArrowRight':
+                    if (gameRunning && movePiece(1, 0)) playSound(300, 0.05);
+                    break;
+                case 'ArrowDown':
+                    if (gameRunning && movePiece(0, 1)) {
+                        score += 1;
+                        updateDisplay();
+                        playSound(250, 0.05);
+                    }
+                    break;
+                case 'ArrowUp':
+                    if (gameRunning) {
+                        const newShapeKey = tryRotate(currentPiece);
+                        if (newShapeKey) {
+                            currentPiece.shape = newShapeKey;
+                            playSound(400, 0.1);
+                        }
+                    }
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    if (gameRunning) {
+                        let dropped = 0;
+                        while (movePiece(0, 1)) {
+                            dropped++;
+                        }
+                        score += dropped * 2;
+                        updateDisplay();
+                        playSound(600, 0.2);
+                        createParticles(currentPiece.x * BLOCK_SIZE + BLOCK_SIZE/2, 
+                                        (currentPiece.y + getShapeHeight(currentPiece.shape)) * BLOCK_SIZE, 15);
+                    }
+                    break;
+                case 'p':
+                case 'P':
+                    gameRunning = !gameRunning;
+                    if (gameRunning) {
+                        if (!animationFrameId) {
+                            lastTime = performance.now();
+                            animationFrameId = requestAnimationFrame(gameLoopEnhanced);
+                        }
+                        playSound(500, 0.1);
+                    } else {
+                        if (animationFrameId) {
+                            cancelAnimationFrame(animationFrameId);
+                            animationFrameId = null;
+                        }
+                        playSound(350, 0.1);
+                    }
+                    break;
+            }
+        });
+
+        // Screen navigation functions
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showDashboard() {
+            gameRunning = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            showScreen('dashboard');
+        }
+
+        function showNameInput() {
+            showScreen('nameInput');
+            document.getElementById('playerName').focus();
+        }
+
+        function confirmName() {
+            const nameInput = document.getElementById('playerName').value.trim();
+            if (nameInput === '') {
+                alert('Silakan masukkan nama terlebih dahulu!');
+                return;
+            }
+            playerName = nameInput;
+            startGame();
+        }
+
+        function startGame() {
+            showScreen('gameScreen');
+            initGame();
+            particles = [];
+            lastTime = performance.now();
+            if (!animationFrameId) {
+                animationFrameId = requestAnimationFrame(gameLoopEnhanced);
+            }
+        }
+
+        function showLeaderboard() {
+            showScreen('leaderboard');
+            displayLeaderboard();
+        }
+
+        function showGameOver() {
+            showScreen('gameOverScreen');
+        }
+
+        // Mobile touch controls
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            touchEndX = e.changedTouches[0].clientX;
+            touchEndY = e.changedTouches[0].clientY;
+            
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const threshold = 30;
+            
+            if (!gameRunning || !currentPiece) return;
+            
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (deltaX > threshold) {
+                    movePiece(1, 0);
+                } else if (deltaX < -threshold) {
+                    movePiece(-1, 0);
+                }
+            } else {
+                if (deltaY > threshold) {
+                    if (movePiece(0, 1)) {
+                        score += 1;
+                        updateDisplay();
+                    }
+                } else if (deltaY < -threshold) {
+                    const newShape = tryRotate(currentPiece);
+                    if (newShape) {
+                        currentPiece.shape = newShape;
+                        playSound(400, 0.1);
+                    }
+                }
+            }
+        });
+
+        canvas.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            if (!gameRunning || !currentPiece) return;
+            
+            let dropped = 0;
+            while (movePiece(0, 1)) {
+                dropped++;
+            }
+            score += dropped * 2;
+            updateDisplay();
+            playSound(600, 0.2);
+            createParticles(currentPiece.x * BLOCK_SIZE + BLOCK_SIZE/2, 
+                            (currentPiece.y + getShapeHeight(currentPiece.shape)) * BLOCK_SIZE, 15);
+        });
+
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // Auto-save scores periodically (as backup)
+        setInterval(() => {
+            if (storageManager.isLocalStorageAvailable) {
+                try {
+                    const scores = storageManager.loadScores();
+                    if (scores.length > 0) {
+                        storageManager.saveScores(scores);
+                        console.log('🔄 Auto-backup completed');
+                    }
+                } catch (e) {
+                    console.warn('Auto-backup failed:', e);
+                }
+            }
+        }, 60000); // Every minute
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            displayLeaderboard();
+            console.log('🎮 Tetris Neon Game Ready!');
+            console.log('📱 Mobile controls: Swipe to move, double-tap to drop');
+            console.log('⌨️ Keyboard: Arrow keys + Space + P for pause');
+            console.log('💾 Storage status:', storageManager.isLocalStorageAvailable ? 'Active' : 'Limited');
+        });
+
+        // Handle page unload (save any pending data)
+        window.addEventListener('beforeunload', () => {
+            if (score > 0 && gameRunning) {
+                // Quick save current game state if score exists
+                saveScore(score, playerName);
+            }
+        });
+
+        // Handle visibility change (save data when tab becomes hidden)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && score > 0 && gameRunning) {
+                // Backup current game progress
+                const tempScores = storageManager.loadScores();
+                const currentGameData = {
+                    score: score,
+                    name: playerName + ' (Progress)',
+                    date: new Date().toLocaleDateString('id-ID'),
+                    timestamp: Date.now(),
+                    level: level,
+                    lines: lines,
+                    isProgress: true
+                };
+                
+                // Save as backup (won't show in leaderboard due to isProgress flag)
+                sessionStorage.setItem('tetrisCurrentGame', JSON.stringify(currentGameData));
+            }
+        });
+
+        // Error handling for storage operations
+        window.addEventListener('error', (e) => {
+            if (e.message && e.message.includes('localStorage')) {
+                console.warn('LocalStorage error detected, switching to fallback mode');
+                storageManager.isLocalStorageAvailable = false;
+                storageManager.updateStorageStatus();
+            }
+        });
+
+    </script>
+</body>
+</html>
